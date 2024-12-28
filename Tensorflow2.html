@@ -52,6 +52,7 @@
             margin-top: 20px;
             color: rgb(31, 33, 34); /* Dark gray for labels */
             font-size: 1rem;
+            width: 150px; /* Ensuring the label container width as in your request */
         }
         input[type="file"] {
             display: none;
@@ -59,7 +60,7 @@
     </style>
 </head>
 <body>
-    <h1>Vehicle Identifier</h1>
+    <h1>MGM School Student's Image Model</h1>
     <div class="button-container">
         <button type="button" onclick="useWebcam()">Use Webcam</button>
         <button type="button" onclick="uploadImage()">Upload Image</button>
@@ -123,6 +124,7 @@
                 reader.onload = async function (e) {
                     const imgElement = document.createElement("img");
                     imgElement.src = e.target.result;
+                    //imgElement.width = 200;
                     imgElement.height = 200;
 
                     const imageContainer = document.getElementById("image-container");
@@ -130,8 +132,8 @@
                     imageContainer.appendChild(imgElement);
 
                     const prediction = await model.predict(imgElement);
-                    updateLabels(prediction);
-                    console.log(prediction);
+                    updateLabels(prediction)
+                    console.log(prediction);;
                 };
                 reader.readAsDataURL(file);
             }
