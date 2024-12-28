@@ -4,24 +4,139 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vehicle Identifier</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    <style>
+        body {
+            text-align: center;
+            display: block;
+            margin: auto;
+            background-color: #333; /* Dark grey background */
+            color: white;
+            font-family: 'Sans-serif'; /* Sans-serif font */
+        }
+
+        div {
+            font-size: 1.5rem;
+            margin-top: 20px;
+        }
+
+        button {
+            background-color: #e53935; /* Red color */
+            color: white;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin: 10px;
+        }
+
+        button:hover {
+            background-color: #b71c1c; /* Darker red on hover */
+        }
+
+        #label-container {
+            margin-top: 20px;
+            font-size: 1rem;
+            color: white;
+        }
+    </style>
 </head>
-<body style="text-align: center;">
-    <H1>Dekh bhai</H1>
-    <class id="butts" style="display: block; width: 100; height: 100px; margin: auto; align-items: center;">
-        <div id="11" class="butts">
-            <p>Ye wala Teachable Machines ka original model hai. -></p>
-            <a href="Tensorflow1.html" target="_blank">
-                <button>OG model</button>
-            </a>
-        </div>
-        <div id="22" class="butts">
-            <p>Ye wala modified hai file input ke liye. -></p>
-            <a href="Tensorflow2.html" target="_blank">
-                <button>Modified model</button>
-            </a>
-        </div>
-    </class>
-    <br>
-    <h2>Dekh aur bata</h2>
+<body>
+    <div>Vehicle Identifier</div>
+    <button type="button" onclick="useWebcam()">Use Webcam</button>
+    <button type="button" onclick="uploadImage()">Upload Image</button>
+    <input type="file" id="image-upload" style="display:none;" accept="image/*" onchange="handleImageUpload(event)">
+    <div id="webcam-container"></div>
+    <div id="image-container"></div>
+    <div id="label-container" style="width: 150px;"></div>
+
+    <script type="text/javascript">
+        const URL = "./";
+        let model, webcam, labelContainer, maxPredictions;
+
+        // Load the model
+        async function loadModel() {
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+        }
+
+        // Webcam setup
+        async function useWebcam() {
+            await loadModel();
+            const flip = true;
+            webcam = new tmImage.Webcam(200, 200, flip);
+            await webcam.setup();
+            await webcam.play();
+            window.requestAnimationFrame(loop);
+
+            document.getElementById("webcam-container").appendChild(webcam.canvas);
+            labelContainer = document.getElementById("label-container");
+            clearContainer();
+            for (let i = 0; i < maxPredictions; i++) {
+                labelContainer.appendChild(document.createElement("div"));
+            }
+        }
+
+        async function loop() {
+            webcam.update();
+            await predictFromWebcam();
+            window.requestAnimationFrame(loop);
+        }
+
+        async function predictFromWebcam() {
+            const prediction = await model.predict(webcam.canvas);
+            updateLabels(prediction);
+            console.log(prediction);
+        }
+
+        // Handle image upload
+        async function uploadImage() {
+            await loadModel();
+            document.getElementById('image-upload').click();
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async function (e) {
+                    const imgElement = document.createElement("img");
+                    imgElement.src = e.target.result;
+                    imgElement.height = 200;
+
+                    const imageContainer = document.getElementById("image-container");
+                    clearContainer();
+                    imageContainer.appendChild(imgElement);
+
+                    const prediction = await model.predict(imgElement);
+                    updateLabels(prediction);
+                    console.log(prediction);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Update predictions
+        function updateLabels(predictions) {
+            labelContainer = document.getElementById("label-container");
+            labelContainer.innerHTML = ""; // Clear previous labels
+            for (let i = 0; i < predictions.length; i++) {
+                const classPrediction =
+                    predictions[i].className + ": " + predictions[i].probability.toFixed(2);
+                labelContainer.appendChild(document.createElement("div")).innerHTML = classPrediction;
+            }
+        }
+
+        // Utility function to clear containers
+        function clearContainer() {
+            document.getElementById("webcam-container").innerHTML = "";
+            document.getElementById("image-container").innerHTML = "";
+        }
+    </script>
 </body>
 </html>
